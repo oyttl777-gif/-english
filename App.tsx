@@ -64,7 +64,7 @@ const App: React.FC = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const timerIntervalRef = useRef<number | null>(null);
+  const timerIntervalRef = useRef<any>(null);
 
   const calendarData = useMemo(() => {
     const now = new Date();
