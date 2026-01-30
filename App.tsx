@@ -18,7 +18,8 @@ import {
   CloudArrowDownIcon,
   ExclamationCircleIcon,
   Cog6ToothIcon,
-  ClockIcon
+  ClockIcon,
+  InformationCircleIcon
 } from '@heroicons/react/24/outline';
 
 const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbwqJNte9iEsNvW_5CWwyxkdxYazw7nTQ_cH2W0GYQwqDDWFSReQII1xLXwXNSoxOfuGIA/exec";
@@ -95,7 +96,7 @@ const App: React.FC = () => {
 
       if (dataArray.length > 0) {
         const parsedWords: WordEntry[] = dataArray
-          .slice(1) // 헤더 제외
+          .slice(1) 
           .map((item: any) => ({
             word: String(Array.isArray(item) ? item[2] : (item.영어단어 || item.word || "")).trim(),
             meaning: String(Array.isArray(item) ? item[3] : (item.의미 || item.meaning || "")).trim()
@@ -213,12 +214,29 @@ const App: React.FC = () => {
     if (isScoring) return;
     setIsScoring(true);
     const target = testWords[testStep];
-    const score = await scoreTest(target.word, target.meaning, currentTestInput.spelling, currentTestInput.meaning);
-    setTestResults([...testResults, { ...target, userSpelling: currentTestInput.spelling, userMeaning: currentTestInput.meaning, isCorrect: score.isCorrect, feedback: score.feedback }]);
-    setIsScoring(false);
-    if (testStep < testWords.length - 1) {
-      setTestStep(testStep + 1);
-      setCurrentTestInput({ spelling: '', meaning: '' });
+    try {
+      const score = await scoreTest(target.word, target.meaning, currentTestInput.spelling, currentTestInput.meaning);
+      setTestResults([...testResults, { 
+        ...target, 
+        userSpelling: currentTestInput.spelling, 
+        userMeaning: currentTestInput.meaning, 
+        isCorrect: score.isCorrect, 
+        feedback: score.feedback 
+      }]);
+    } catch (e) {
+      setTestResults([...testResults, { 
+        ...target, 
+        userSpelling: currentTestInput.spelling, 
+        userMeaning: currentTestInput.meaning, 
+        isCorrect: false, 
+        feedback: "오류가 발생했습니다." 
+      }]);
+    } finally {
+      setIsScoring(false);
+      if (testStep < testWords.length - 1) {
+        setTestStep(testStep + 1);
+        setCurrentTestInput({ spelling: '', meaning: '' });
+      }
     }
   };
 
@@ -484,14 +502,22 @@ const App: React.FC = () => {
 
         {activeTab === 'settings' && (
           <div className="animate-fadeIn space-y-6">
-            <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-6">
+            <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Cog6ToothIcon className="w-6 h-6 text-indigo-600" /> 설정</h2>
+               
+               <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex gap-3 items-start">
+                  <InformationCircleIcon className="w-5 h-5 text-blue-500 mt-0.5" />
+                  <div className="text-xs text-blue-700 leading-relaxed">
+                    <strong>API 키 안내:</strong> Vercel의 Environment Variables에 <code>API_KEY</code>를 등록하세요. 만약 테스트 중이라면 <code>geminiService.ts</code> 파일 상단에 직접 입력할 수도 있습니다.
+                  </div>
+               </div>
+
                <div className="space-y-4">
                  <div className="space-y-2">
-                   <label className="text-xs font-bold text-slate-500">GAS 배포 URL</label>
-                   <input type="text" value={gasUrl} onChange={(e) => setGasUrl(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-[10px] font-mono outline-none" />
+                   <label className="text-xs font-bold text-slate-500">GAS 배포 URL (구글 시트 연동)</label>
+                   <input type="text" value={gasUrl} onChange={(e) => setGasUrl(e.target.value)} className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-5 py-4 text-[10px] font-mono outline-none focus:ring-1 focus:ring-indigo-300" placeholder="https://script.google.com/..." />
                  </div>
-                 <button onClick={() => { localStorage.setItem('study_gas_url', gasUrl); fetchSheetData(); alert('저장되었습니다.'); }} className="w-full bg-indigo-600 text-white font-bold py-5 rounded-2xl">저장 및 동기화</button>
+                 <button onClick={() => { localStorage.setItem('study_gas_url', gasUrl); fetchSheetData(); alert('설정이 저장되었습니다.'); }} className="w-full bg-indigo-600 text-white font-bold py-5 rounded-2xl shadow-md active:scale-95 transition-all">설정 저장 및 데이터 동기화</button>
                </div>
             </div>
           </div>
